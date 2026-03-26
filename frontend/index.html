@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FlowGraph AI</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      background: #0f172a;
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    #graph {
+      flex: 3;
+      background: #020617;
+    }
+
+    #graph iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      background: #020617;
+      border-left: 1px solid #1e293b;
+    }
+
+    h2 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+    }
+
+    .quick {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .quick button {
+      flex: 1;
+      background: #1e293b;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .quick button:hover {
+      background: #334155;
+    }
+
+    #chatBox {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      background: #020617;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 85%;
+      font-size: 14px;
+    }
+
+    .user {
+      background: #2563eb;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .bot {
+      background: #111827;
+    }
+
+    .card {
+      background: #111827;
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 4px solid #22c55e;
+      font-size: 13px;
+    }
+
+    .amount {
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    #inputArea {
+      display: flex;
+      margin-top: 10px;
+      gap: 6px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #111827;
+      color: white;
+    }
+
+    button.send {
+      padding: 10px 16px;
+      border: none;
+      background: #22c55e;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.send:hover {
+      background: #16a34a;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- GRAPH -->
+  <div id="graph">
+    <iframe src="/graph"></iframe>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel">
+
+    <h2>FlowGraph AI</h2>
+
+    <div class="quick">
+      <button onclick="sendQuick('show high value orders')">High Value</button>
+      <button onclick="sendQuick('show leakage')">Leakage</button>
+    </div>
+
+    <div id="chatBox"></div>
+
+    <div id="inputArea">
+      <input id="input" placeholder="Ask something..." />
+      <button class="send" onclick="send()">Send</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+function addMessage(text, type) {
+  let box = document.getElementById("chatBox");
+
+  let div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerText = text;
+
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addCards(data) {
+  let box = document.getElementById("chatBox");
+
+  data.forEach(item => {
+    let div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div><b>${item.order || "Order"}</b></div>
+      <div class="amount">₹ ${item.amount || 0}</div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function sendQuick(q) {
+  document.getElementById("input").value = q;
+  send();
+}
+
+function send() {
+  let input = document.getElementById("input");
+  let msg = input.value;
+
+  if (!msg) return;
+
+  let box = document.getElementById("chatBox");
+
+  // 🔥 Clear previous chat
+  box.innerHTML = "";
+
+  addMessage(msg, "user");
+  input.value = "";
+
+  console.log("Sending:", msg);
+
+  axios.post("/chat", {
+    message: msg
+  })
+  .then(res => {
+
+    console.log("Response:", res.data);
+
+    addMessage(res.data.answer || "No response", "bot");
+
+    if (res.data.data && res.data.data.length > 0) {
+      addCards(res.data.data);
+    }
+
+  })
+  .catch(err => {
+    console.error(err);
+    addMessage("Server error. Try again.", "bot");
+  });
+}
+
+// 🔥 ENTER KEY SUPPORT
+document.getElementById("input").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    send();
+  }
+});
+
+</script>
+
+</body>
+</html>
