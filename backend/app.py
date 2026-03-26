@@ -6,9 +6,7 @@ import os
 import re
 
 
-# =========================
-# 🔹 QUERY EXECUTOR (FINAL)
-# =========================
+
 def execute_query(query_json):
     raw = query_json.get("raw", "").lower()
     intent = query_json.get("intent")
@@ -17,9 +15,7 @@ def execute_query(query_json):
     print("RAW:", raw)
     print("INTENT FROM LLM:", intent)
 
-    # =========================
-    # 🔥 FORCE INTENT (ROBUST)
-    # =========================
+    
     if any(word in raw for word in ["product"]):
         intent = "product_analysis"
 
@@ -34,11 +30,7 @@ def execute_query(query_json):
 
     print("FINAL INTENT:", intent)
 
-    # =========================
-    # 🔥 EXECUTION
-    # =========================
-
-    # ✅ HIGH VALUE (FILTER FIXED)
+   
     if intent == "high_value":
 
         match = re.search(r"\d+", raw)
@@ -55,17 +47,16 @@ def execute_query(query_json):
 
         return high_value_orders()
 
-    # ✅ LEAKAGE
+   
     if intent == "leakage":
         print("RUNNING LEAKAGE FUNCTION")
         return orders_not_invoiced()
 
-    # ✅ TRACE
     if intent == "trace":
         from query import trace_order_flow
         return trace_order_flow(query_json)
 
-    # ✅ PRODUCT ANALYSIS
+    
     if intent == "product_analysis":
         from query import product_with_most_invoices
         return product_with_most_invoices()
@@ -73,9 +64,6 @@ def execute_query(query_json):
     return []
 
 
-# =========================
-# 🔹 FLASK APP
-# =========================
 app = Flask(__name__)
 
 build_graph()
@@ -114,9 +102,6 @@ def leakage():
     })
 
 
-# =========================
-# 🔹 CHAT API
-# =========================
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
@@ -127,7 +112,7 @@ def chat():
     return jsonify(result)
 
 
-==============
+
 if __name__ == "__main__":
     if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
